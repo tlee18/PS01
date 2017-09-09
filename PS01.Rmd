@@ -1,14 +1,17 @@
 ---
-title: "STAT/MATH 495: Problem Set 01"
-author: "WRITE YOUR NAME HERE"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
+title: 'STAT/MATH 495: Problem Set 01'
+author: "Tim Lee"
+date: '2017-09-07'
 output:
   html_document:
-    toc: true
-    toc_float: true
+    collapsed: no
+    smooth_scroll: no
+    toc: yes
     toc_depth: 2
-    collapsed: false
-    smooth_scroll: false
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
 ---
 
 ```{r setup, include=FALSE}
@@ -17,5 +20,51 @@ knitr::opts_chunk$set(echo = TRUE, fig.width=8, fig.height=4.5)
 # Load packages
 library(tidyverse)
 ```
+
+```{r}
+train <- read_csv("https://rudeboybert.github.io/STAT495/static/Titanic/train.csv")
+test <- read_csv("https://rudeboybert.github.io/STAT495/static/Titanic/test.csv")
+submission <- read_csv("https://rudeboybert.github.io/STAT495/static/Titanic/gender_submission.csv")
+
+glimpse(train)
+glimpse(test)
+glimpse(submission)
+
+
+test %>% 
+  left_join(submission, by="PassengerId") %>% 
+  select(PassengerId, Sex, Survived)
+
+```
+
+# Exploratory Data Analysis
+```{r}
+# Below are some tables showing the survival rates as a function of Pclass and Sex
+table(train$Survived, train$Sex)
+table(train$Survived, train$Pclass)
+
+# Plotting age groups (per 5 years) and their survival rates
+plot1 <- ggplot(train, aes(Age)) 
+plot1 + geom_histogram(aes(fill = factor(Survived)), binwidth = 3)
+
+# Plotting passenger class (Pclass) and their survival rates
+# It seems like Pclass = 3 shows the greatest contrast between survival and death,
+# so I will use Pclass = 3 as surviving and all the other Pclass levels as dead
+plot2 <- ggplot(train, aes(Pclass))
+plot2 + geom_bar(aes(fill = factor(Survived)))
+
+# Selecting the specific variables for the submission file
+submission <- test %>%
+  left_join(submission, by = "PassengerId") %>%
+  select(PassengerId, Pclass, Survived) %>%
+  mutate(Survived = if_else(Pclass == 3, 1, 0)) %>%
+  select(PassengerId, Survived)
+
+# Writing the .csv file for submitting to Kaggle
+write.csv(submission, file = "submission.csv", row.names = FALSE)
+
+```
+
+
 
 
